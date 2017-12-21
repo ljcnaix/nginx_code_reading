@@ -1,2 +1,2 @@
 # default output file and cscope file
-.out
+*.out
