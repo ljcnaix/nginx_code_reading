@@ -36,15 +36,34 @@ typedef struct {
     u_char     *data;
 } ngx_variable_value_t;
 
-
+/*
+ * 以下两个宏只能用于结构体初始化时进行赋值，出错示例：
+ *
+ * ngx_str_t str;
+ * str = ngx_string("hello world");     // 编译出错
+ * str = ngx_null_string;               // 编译出错
+ *
+ */
 #define ngx_string(str)     { sizeof(str) - 1, (u_char *) str }
 #define ngx_null_string     { 0, NULL }
+
+/*
+ * 以下两个宏必须在语句块中使用，出错示例：
+ *
+ * ngx_str_t str;
+ * if (cond)
+ *     ngx_str_set(&str, "true");       // 问题产生
+ * else
+ *     ngx_str_null(&str);              // 问题产生
+ *
+ */
 #define ngx_str_set(str, text)                                               \
     (str)->len = sizeof(text) - 1; (str)->data = (u_char *) text
 #define ngx_str_null(str)   (str)->len = 0; (str)->data = NULL
 
-
+// 如果为大写字母则转换为小写字母，否则不变
 #define ngx_tolower(c)      (u_char) ((c >= 'A' && c <= 'Z') ? (c | 0x20) : c)
+// 如果为小写字母则转换为大写字母，否则不变
 #define ngx_toupper(c)      (u_char) ((c >= 'a' && c <= 'z') ? (c & ~0x20) : c)
 
 void ngx_strlow(u_char *dst, u_char *src, size_t n);
