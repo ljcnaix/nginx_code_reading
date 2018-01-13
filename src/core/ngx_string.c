@@ -15,6 +15,9 @@ static ngx_int_t ngx_decode_base64_internal(ngx_str_t *dst, ngx_str_t *src,
     const u_char *basis);
 
 
+/*
+ * 将src前n个字符的大写字母转换成小写字母，并存放到dst中
+ */
 void
 ngx_strlow(u_char *dst, u_char *src, size_t n)
 {
