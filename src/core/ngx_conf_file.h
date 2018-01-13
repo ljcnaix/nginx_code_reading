@@ -109,31 +109,79 @@ struct ngx_open_file_s {
 #define NGX_MODULE_V1_PADDING  0, 0, 0, 0, 0, 0, 0, 0
 
 struct ngx_module_s {
+    /*
+     * ctx_index表示当前模块在同类模块中的序号。
+     * 这个成员常常是由管理这类模块的一个Nginx核心模块设置的，
+     * 以http模块为例，ctx_index由核心模块ngx_http_module函数设置。
+     *
+     */
     ngx_uint_t            ctx_index;
+
+    /*
+     * index表示当前模块在ngx_modules数组中的序号。
+     * nginx在启动时，会根据ngx_modules数组设置个模块的index值。
+     *
+     * ngx_max_module = 0;
+     * for (i = 0; ngx_modules[i]; i++) {
+     *     ngx_modules[i]->index = ngx_max_module++;
+     * }
+     *
+     */
     ngx_uint_t            index;
 
+
+    // spare系列的保留变量，暂未使用
     ngx_uint_t            spare0;
     ngx_uint_t            spare1;
     ngx_uint_t            spare2;
     ngx_uint_t            spare3;
 
+    // 模块的版本
     ngx_uint_t            version;
 
+    /*
+     * ctx用于指向一类模块的上下文
+     */
     void                 *ctx;
+
+    // commands将处理nginx.conf中的配置项
     ngx_command_t        *commands;
+
+    /*
+     * type表示该模块的类型，它与ctx指针是紧密相关的。
+     * 在nginx官方文档中，它的取值范围有以下5种：
+     * NGX_HTTP_MODULE、NGX_CORE_MODULE、NGX_CONF_MODULE、
+     * NGX_EVENT_MODULE、NGX_MAIL_MODULE。
+     *
+     */
     ngx_uint_t            type;
 
+    /*
+     * 在nginx启动/停止过程中，有7个执行点会分别调用下述的7个回调函数。
+     * 如果不需要nginx调用，简单把它们设置为NULL值就可以了。
+     *
+     */
+
+    // 进程启动时回调init_master
     ngx_int_t           (*init_master)(ngx_log_t *log);
 
+    // 初始化所有模块时调用init_module
     ngx_int_t           (*init_module)(ngx_cycle_t *cycle);
 
+    // 在master/worker模式下，每个worker进程的初始化过程会调用所用模块的init_process函数
     ngx_int_t           (*init_process)(ngx_cycle_t *cycle);
+
+    // 目前nginx还没有支持多线程模式，所以init_thread/exit_thread设为NULL
     ngx_int_t           (*init_thread)(ngx_cycle_t *cycle);
     void                (*exit_thread)(ngx_cycle_t *cycle);
+
+    // 在master/worker模式下，worker进程会在退出前调用exit_process函数
     void                (*exit_process)(ngx_cycle_t *cycle);
 
+    // 在master进程退出前，会调用exit_master函数
     void                (*exit_master)(ngx_cycle_t *cycle);
 
+    // spare_hook变量也是保留字段，暂未使用
     uintptr_t             spare_hook0;
     uintptr_t             spare_hook1;
     uintptr_t             spare_hook2;
