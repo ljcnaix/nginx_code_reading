@@ -37,7 +37,7 @@ typedef struct {
 } ngx_variable_value_t;
 
 /*
- * 以下两个宏只能用于结构体初始化时进行赋值，出错示例：
+ * 以下两个宏只能用于结构体初始化，不能用于赋值操作，出错示例：
  *
  * ngx_str_t str;
  * str = ngx_string("hello world");     // 编译出错

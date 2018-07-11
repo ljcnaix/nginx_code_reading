@@ -74,16 +74,28 @@
 
 #define NGX_MAX_CONF_ERRSTR  1024
 
-
+// 每一个ngx_command_s结构体保存了一个模块感兴趣的配置项
 struct ngx_command_s {
+    // 配置项名称
     ngx_str_t             name;
+    /*
+     * 配置项类型，type将指定配置项可以出现的位置。例如，出现在server{}或locatio
+     * n{}中，以及它可以携带的参数个数
+     */
     ngx_uint_t            type;
+    // 出现了name中指定的配置项后，将调用set方法处理配置项的参数
     char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+    // 在配置文件中的偏移量
     ngx_uint_t            conf;
+    /*
+     * 通常用于使用预设的解析方法解析配置项
+     */
     ngx_uint_t            offset;
+    // 配置项读取后的处理方法，必须是ngx_conf_post_t结构的指针
     void                 *post;
 };
 
+// ngx_null_command是一个空的ngx_command_s
 #define ngx_null_command  { ngx_null_string, 0, NULL, 0, 0, NULL }
 
 
@@ -140,7 +152,7 @@ struct ngx_module_s {
     ngx_uint_t            version;
 
     /*
-     * ctx用于指向一类模块的上下文
+     * ctx用于指向一类模块的公共接口
      */
     void                 *ctx;
 

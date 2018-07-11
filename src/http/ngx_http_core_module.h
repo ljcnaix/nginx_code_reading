@@ -98,22 +98,40 @@ typedef struct {
 
 
 typedef enum {
+    // 在接收到完整的http头部后的处理阶段
     NGX_HTTP_POST_READ_PHASE = 0,
 
+    // 在还没查询到URI匹配的location前，这时rewrite url也作为一个独立的HTTP阶段
     NGX_HTTP_SERVER_REWRITE_PHASE,
 
+    // 根据URI寻找匹配的location，这个阶段通常由ngx_http_core_module模块实现，
+    // 不建议其他HTTP模块重新定义这一阶段的行为
     NGX_HTTP_FIND_CONFIG_PHASE,
+
+    // 在NGX_HTTP_FIND_CONFIG_PHASE后rewrite url
     NGX_HTTP_REWRITE_PHASE,
+
+    // 这一阶段用于在rewrite url后重新跳到NGX_HTTP_FIND_CONFIG_PHASE阶段，找到
+    // 与新的URI匹配的location，
     NGX_HTTP_POST_REWRITE_PHASE,
 
+    // 处理NGX_HTTP_PREACCESS_PHASE阶段前，HTTP模块可以介入的处理阶段
     NGX_HTTP_PREACCESS_PHASE,
 
+    // 这个阶段用于让HTTP模块判断是否允许这个请求访问nginx服务器
     NGX_HTTP_ACCESS_PHASE,
+
+    // 当NGX_HTTP_ACCESS_PHASE阶段中，HTTP模块的handler处理方法返回不允许访问的
+    // 错误码时，这个阶段将构造拒绝服务的用户响应
     NGX_HTTP_POST_ACCESS_PHASE,
 
+    // 这个阶段实现try_files配置项的功能
     NGX_HTTP_TRY_FILES_PHASE,
+
+    // 用于处理HTTP请求内容的阶段，这时大部分HTTP模块最喜欢介入的阶段
     NGX_HTTP_CONTENT_PHASE,
 
+    // 处理完请求后记录日志的阶段
     NGX_HTTP_LOG_PHASE
 } ngx_http_phases;
 
