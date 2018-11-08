@@ -3,24 +3,32 @@
 # Copyright (C) Igor Sysoev
 # Copyright (C) Nginx, Inc.
 
-
+# auto/options脚本处理configure命令行的参数。options脚本会定义后续工作需要的变
+# 量，然后根据本次参数和默认值设置这些变量
 . auto/options
+# auto/init脚本初始化后续将产生的文件路径。例如，Makefile、ngx_modules.c等文件
+# 默认情况下将会在<nginx-source>/objs/目录下
 . auto/init
+# auto/sources脚本将分析nginx的源码结构，这样才能构造后续的Makefile文件
 . auto/sources
 
+# 编译过程中所有目标文件生成的路径由--builddir=DIR参数指定，默认情况下为<nginx-
+# source>/objs，此时这个目录将会被创建
 test -d $NGX_OBJS || mkdir $NGX_OBJS
 
-echo > $NGX_AUTO_HEADERS_H
-echo > $NGX_AUTOCONF_ERR
+# 开始准备建立ngx_auto_headers.h和autoconf.err等必要的编译文件
+echo > $NGX_AUTO_HEADERS_H # objs/ngx_auto_headers.h
+echo > $NGX_AUTOCONF_ERR   # objs/autoconf.err
 
+# 向objs/ngx_auto_config.h写入命令行的参数配置
 echo "#define NGX_CONFIGURE \"$NGX_CONFIGURE\"" > $NGX_AUTO_CONFIG_H
 
-
+# 判断DEBUG标志，如果有，那么在objs/ngx_auto_config.h文件中写入NGX_DEBUG宏
 if [ $NGX_DEBUG = YES ]; then
     have=NGX_DEBUG . auto/have
 fi
 
-
+# 开始检查操作系统是否支持后续编译
 if test -z "$NGX_PLATFORM"; then
     echo "checking for OS"
 
@@ -28,6 +36,7 @@ if test -z "$NGX_PLATFORM"; then
     NGX_RELEASE=`uname -r 2>/dev/null`
     NGX_MACHINE=`uname -m 2>/dev/null`
 
+    # 屏幕打印OS名称，内核版本和体系架构信息
     echo " + $NGX_SYSTEM $NGX_RELEASE $NGX_MACHINE"
 
     NGX_PLATFORM="$NGX_SYSTEM:$NGX_RELEASE:$NGX_MACHINE";
@@ -43,21 +52,33 @@ else
     NGX_SYSTEM=$NGX_PLATFORM
 fi
 
+# 检查并设置编译器
 . auto/cc/conf
 
+# 对非Windows系统，定义一些必要的头文件，并检查其是否存在。
+# 在configure脚本里检查某个特性是否存在时，会生成一个最简单的只包含main函数的C
+# 程序，该程序会包含相应的头文件。然后，通过检查是否可以编译通过来确认特性是否
+# 支持，并将结果记录在objs/autoconf.err文件中。后续检查头文件，检查特性的脚本都
+# 用了类似的方法
 if [ "$NGX_PLATFORM" != win32 ]; then
     . auto/headers
 fi
 
+# 对于当前操作系统，定义一些特定的操作系统相关的方法，检查当前环境是否支持
 . auto/os/conf
 
+# 定义类unix操作系统通用的头文件和系统调用等，并检查当前环境是否支持
 if [ "$NGX_PLATFORM" != win32 ]; then
     . auto/unix
 fi
 
+# 最核心的构造运行期modules的脚本。它将会生成ngx_modules.c文件，
 . auto/modules
+
+# 检查nginx链接期间需要的第三方静态库、动态库或者目标文件是否存在
 . auto/lib/conf
 
+# 处理nginx安装后的路径
 case ".$NGX_PREFIX" in
     .)
         NGX_PREFIX=${NGX_PREFIX:-/usr/local/nginx}
@@ -73,6 +94,7 @@ case ".$NGX_PREFIX" in
     ;;
 esac
 
+# 处理nginx安装后配置文件的路径
 if [ ".$NGX_CONF_PREFIX" != "." ]; then
     have=NGX_CONF_PREFIX value="\"$NGX_CONF_PREFIX/\"" . auto/define
 fi
@@ -95,6 +117,7 @@ have=NGX_HTTP_UWSGI_TEMP_PATH value="\"$NGX_HTTP_UWSGI_TEMP_PATH\""
 have=NGX_HTTP_SCGI_TEMP_PATH value="\"$NGX_HTTP_SCGI_TEMP_PATH\""
 . auto/define
 
+# 创建编译时使用的obj/Makefile文件
 . auto/make
 . auto/lib/make
 . auto/install
@@ -105,4 +128,5 @@ have=NGX_HTTP_SCGI_TEMP_PATH value="\"$NGX_HTTP_SCGI_TEMP_PATH\""
 have=NGX_USER value="\"$NGX_USER\"" . auto/define
 have=NGX_GROUP value="\"$NGX_GROUP\"" . auto/define
 
+# 显示configure执行结果
 . auto/summary
